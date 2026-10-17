@@ -1,0 +1,6 @@
+# Start the camera photo loop for a mission step, or stop it (siyi_a8 photo_node).
+# Photos are saved in <photo_dir>/<run>/<task>/.
+string task    # folder name for the step (letters, digits, _ or -); "" = stop the loop
+---
+bool success
+string message

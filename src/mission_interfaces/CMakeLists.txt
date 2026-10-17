@@ -21,6 +21,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "action/DeliverPayload.action"
   # camera
   "srv/SetZoom.srv"
+  "srv/SetPhotoTask.srv"
   # perception outputs
   "msg/QrCode.msg"
   "msg/QrDetection.msg"

@@ -16,8 +16,7 @@ import py_trees
 import py_trees_ros
 import rclpy
 from px4_msgs.msg import VehicleGlobalPosition, VehicleStatus
-from std_srvs.srv import SetBool
-from mission_interfaces.srv import SetZoom
+from mission_interfaces.srv import SetPhotoTask, SetZoom
 from mission_interfaces.action import (
     AlignWithCorridor, CaptureReference, CenterOnTarget, DeliverPayload, GoTo, Land, NavigateCorridor,
     SearchTarget, Takeoff,
@@ -36,7 +35,7 @@ SEARCH_ALTITUDE = 10.0  # m, identify the target QR in the delivery zone
 DELIVERY_ALTITUDE = 5.0  # m, payload release
 RETURN_ALTITUDE = 10.0  # m, "after payload delivery, ascend to 10 meter altitude"
 
-PHOTO_ENABLE_SERVICE = "/siyi_photo/enable"
+PHOTO_TASK_SERVICE = "/siyi_photo/set_task"
 ZOOM_SERVICE = "/siyi_gimbal/set_zoom"
 
 
@@ -74,34 +73,35 @@ class WaitForPx4Ready(py_trees.behaviour.Behaviour):
 
 
 class WithPhotos(py_trees.decorators.Decorator):
-    """Run the child step with the camera photo loop on; switch it off when the step ends
-    (success, failure or interruption)."""
+    """Run the child step with the camera photo loop on, saving into the `task` folder of this
+    run; switch it off when the step ends (success, failure or interruption)."""
 
-    def __init__(self, child):
-        super().__init__(name=f"Photos: {child.name}", child=child)
+    def __init__(self, task, child):
+        super().__init__(name=f"Photos ({task}): {child.name}", child=child)
+        self.task = task
         self.node = None
         self.client = None
 
     def setup(self, **kwargs):
         self.node = kwargs["node"]
-        self.client = self.node.create_client(SetBool, PHOTO_ENABLE_SERVICE)
+        self.client = self.node.create_client(SetPhotoTask, PHOTO_TASK_SERVICE)
 
     def initialise(self):
-        self.set_photos(True)
+        self.set_task(self.task)
 
     def update(self):
         return self.decorated.status
 
     def terminate(self, new_status):
-        self.set_photos(False)
+        self.set_task("")
 
-    def set_photos(self, on):
+    def set_task(self, task):
         if not self.client.service_is_ready():
             # e.g. SITL, where the Gazebo camera streams continuously
             self.node.get_logger().warn(
-                f"{PHOTO_ENABLE_SERVICE} not available; '{self.decorated.name}' runs without switching photos.")
+                f"{PHOTO_TASK_SERVICE} not available; '{self.decorated.name}' runs without switching photos.")
             return
-        self.client.call_async(SetBool.Request(data=on))
+        self.client.call_async(SetPhotoTask.Request(task=task))
 
 
 class WithZoom(py_trees.decorators.Decorator):
@@ -166,7 +166,7 @@ def create_root():
                Takeoff.Goal(altitude=QR_SCAN_ALTITUDE)),
         action(f"Climb to exactly {QR_SCAN_ALTITUDE:.0f} m", GoTo, "/flight_controller/goto",
                go_to_altitude(QR_SCAN_ALTITUDE, QR_SCAN_ALTITUDE_TOLERANCE)),
-        WithPhotos(py_trees.composites.Sequence("Start QR", memory=True, children=[
+        WithPhotos("start_qr", py_trees.composites.Sequence("Start QR", memory=True, children=[
             # As in lawnmower_mission.py: if centring does not converge, hold there and carry on.
             py_trees.decorators.FailureIsSuccess(
                 "Carry on if not fully centred",
@@ -180,21 +180,21 @@ def create_root():
         ])),
 
         # Corridor navigation: align with the green banner, descend, fly the corridor
-        WithPhotos(action("Align with corridor (forward)", AlignWithCorridor, "/align_with_corridor",
-                          AlignWithCorridor.Goal())),
+        WithPhotos("banner_forward", action("Align with corridor (forward)", AlignWithCorridor,
+                                            "/align_with_corridor", AlignWithCorridor.Goal())),
         action(f"Descend to {CORRIDOR_ALTITUDE:.0f} m", GoTo, "/flight_controller/goto",
                go_to_altitude(CORRIDOR_ALTITUDE)),
-        WithPhotos(action("Navigate corridor (forward)", NavigateCorridor, "/navigate_corridor",
-                          NavigateCorridor.Goal())),
+        WithPhotos("corridor_forward", action("Navigate corridor (forward)", NavigateCorridor,
+                                              "/navigate_corridor", NavigateCorridor.Goal())),
 
         # Delivery zone navigation: climb and find the QR matching the captured one
         action(f"Climb to {SEARCH_ALTITUDE:.0f} m", GoTo, "/flight_controller/goto", go_to_altitude(SEARCH_ALTITUDE)),
-        WithPhotos(action("Search target QR", SearchTarget, "/search_target", SearchTarget.Goal())),
+        WithPhotos("target_search", action("Search target QR", SearchTarget, "/search_target", SearchTarget.Goal())),
 
         # Payload delivery
         action(f"Descend to {DELIVERY_ALTITUDE:.0f} m", GoTo, "/flight_controller/goto",
                go_to_altitude(DELIVERY_ALTITUDE)),
-        WithPhotos(py_trees.composites.Sequence("Center and deliver", memory=True, children=[
+        WithPhotos("center_deliver", py_trees.composites.Sequence("Center and deliver", memory=True, children=[
             action("Center on target", CenterOnTarget, "/center_on_target",
                    CenterOnTarget.Goal(target=CenterOnTarget.Goal.TARGET_MATCHED_QR)),
             action("Deliver payload", DeliverPayload, "/deliver_payload", DeliverPayload.Goal()),
@@ -202,7 +202,8 @@ def create_root():
 
         # Return flight
         action(f"Climb to {RETURN_ALTITUDE:.0f} m", GoTo, "/flight_controller/goto", go_to_altitude(RETURN_ALTITUDE)),
-        WithPhotos(Placeholder("Return through corridor")),  # TODO: return lap details still to be specified
+        # TODO: return lap details still to be specified
+        WithPhotos("corridor_return", Placeholder("Return through corridor")),
         Placeholder("Return to take-off point"),  # TODO: record the take-off position, GoTo it
 
         # Landing

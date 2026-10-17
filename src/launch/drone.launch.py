@@ -1,11 +1,12 @@
 """Run the mission on the real drone (Raspberry Pi companion computer, no simulator).
 
-    ros2 launch mission_management drone.launch.py camera_hfov:=<A8 mini HFOV, rad> qr_venv:=$HOME/qr_venv
+    ros2 launch mission_management drone.launch.py camera_hfov:=<A8 mini HFOV, rad> photo_dir:=<folder> \
+        qr_venv:=$HOME/qr_venv
 
 Starts:
   - MicroXRCEAgent on the flight controller's USB port (PX4 <-> ROS 2)
-  - siyi_a8 photo_node: continuous 4K photo loop from the A8 mini's SD card -> /camera/image_raw
-    (the SD-card download API is still a placeholder; see photo_node.py)
+  - siyi_a8 photo_node: 4K photo loop from the A8 mini's SD card (HTTP media API, port 82) ->
+    /camera/image_raw, each photo also saved + geotagged in <photo_dir>/<run>/<mission step>/
   - siyi_a8 gimbal_node: points the A8 mini gimbal straight down (pitch -90 deg), sets the zoom
     (start-up value `zoom`, change in flight with /siyi_gimbal/set_zoom)
   The A8 mini's RTSP stream is not used on the Pi: the ground station views it directly.
@@ -68,6 +69,9 @@ def generate_launch_description():
         DeclareLaunchArgument("gimbal_port", default_value="37260", description="SIYI SDK UDP port"),
         DeclareLaunchArgument("zoom", default_value="1.0",
                               description="A8 mini digital zoom at start-up, 1.0 to 6.0 (1.0 = no zoom)"),
+        DeclareLaunchArgument("photo_dir",
+                              description="Root folder for the 4K photos: <photo_dir>/<run>/<mission step>/ "
+                                          "(+ latest link); required"),
         DeclareLaunchArgument("camera_hfov",
                               description="A8 mini horizontal field of view (rad) for the photos used by "
                                           "target_centering; required, no default"),
@@ -87,6 +91,7 @@ def generate_launch_description():
             parameters=[{
                 "camera_ip": LaunchConfiguration("gimbal_ip"),
                 "camera_port": ParameterValue(LaunchConfiguration("gimbal_port"), value_type=int),
+                "photo_dir": LaunchConfiguration("photo_dir"),
             }],
         ),
         Node(
