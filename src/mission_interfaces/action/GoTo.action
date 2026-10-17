@@ -1,0 +1,20 @@
+# Fly to a position in OFFBOARD (requires a completed Takeoff). Cancel -> hold current position.
+
+uint8 FRAME_LOCAL_NED = 0    # x north, y east, z down (m), same frame as PX4 VehicleLocalPosition
+                             # NaN x/y/z = keep current (e.g. x=y=NaN, z=-10: climb to 10 m above origin)
+uint8 FRAME_BODY_FLU = 1     # offset from the current pose: x forward, y left, z up (m)
+
+uint8 frame
+float32 x
+float32 y
+float32 z
+float32 yaw               # LOCAL_NED: absolute heading (rad, 0 = north, clockwise +)
+                          # BODY_FLU: heading change (rad, counter-clockwise +); NaN = keep current
+float32 speed             # m/s; <= 0 uses the controller default
+float32 acceptance_radius # m; <= 0 uses the controller default
+---
+bool success
+string message
+geometry_msgs/Point final_position  # local NED
+---
+float32 distance_remaining  # m

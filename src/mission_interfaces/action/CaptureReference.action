@@ -1,0 +1,10 @@
+# Capture a clear image of the QR code in view and use it as the matching reference (qr_detector).
+# "Clear" = the first frame with exactly one QR, detector confidence >= conf_threshold,
+# and its box fully inside the image.
+float32 timeout           # s to keep trying before failing
+---
+bool success
+string message
+string image_path         # saved crop of the captured QR ("" if saving failed)
+---
+float32 elapsed           # s since the goal started

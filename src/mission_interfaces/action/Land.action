@@ -1,0 +1,6 @@
+# Land at the current position with PX4 AUTO land and wait until disarmed.
+---
+bool success
+string message
+---
+float32 altitude  # m above the local origin

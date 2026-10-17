@@ -1,0 +1,12 @@
+# Move the drone until it hovers directly over a QR code, using the QR's position in the camera
+# image (target_centering; logic ported from the centring loop of lawnmower_mission.py in
+# Shiva007-RAndom/Qr-and-red-zone-detection).
+uint8 TARGET_SINGLE_QR = 0    # the only QR in view (e.g. the start QR, before a reference exists)
+uint8 TARGET_MATCHED_QR = 1   # the best QR that matches the reference
+
+uint8 target
+---
+bool success                  # true = centred (3 readings in a row within tolerance)
+string message
+---
+float32 offset_px             # latest distance of the QR centre from the image centre

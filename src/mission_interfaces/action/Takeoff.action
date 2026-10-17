@@ -1,0 +1,7 @@
+# Arm, climb with PX4 AUTO takeoff, then engage OFFBOARD holding position.
+float32 altitude          # m to climb above the current altitude
+---
+bool success
+string message
+---
+float32 altitude_remaining  # m

@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>mission_management</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="skiitm198@gmail.com">satyam</maintainer>
+  <license>TODO: License declaration</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>px4_msgs</depend>
+  <depend>takeoff</depend>
+  <depend>mission_interfaces</depend>
+  <depend>flight_controller</depend>
+  <depend>std_srvs</depend>
+  <exec_depend>py_trees</exec_depend>
+  <exec_depend>py_trees_ros</exec_depend>
+  <exec_depend>qr_detector</exec_depend>
+  <exec_depend>banner_detector</exec_depend>
+  <exec_depend>obstacle_detector</exec_depend>
+  <exec_depend>red_zone_detector</exec_depend>
+  <exec_depend>banner_align</exec_depend>
+  <exec_depend>corridor_navigator</exec_depend>
+  <exec_depend>target_search</exec_depend>
+  <exec_depend>target_centering</exec_depend>
+  <exec_depend>payload</exec_depend>
+  <exec_depend>siyi_a8</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

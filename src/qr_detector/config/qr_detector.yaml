@@ -1,0 +1,23 @@
+# Ported from qr_match/config/qr_match.yaml in https://github.com/Shiva007-RAndom/QR_Node (Apache-2.0).
+qr_detector:
+  ros__parameters:
+    # --- reference ---
+    # Absolute path to a reference QR image to preload (bench tests).
+    reference_qr_path: ""      # optional preload; normally captured in flight (~/capture_reference)
+
+    # --- input ---
+    image_topic: "/camera/image_raw"
+    use_compressed: false      # true -> subscribe to sensor_msgs/CompressedImage
+    best_effort_qos: true      # match typical camera driver QoS
+
+    # --- matching ---
+    match_threshold: 0.85      # score >= this counts as a match
+    trust_decoded_text: true   # if both QRs decode, compare payloads exactly
+
+    # --- detector ---
+    model_size: "s"            # qrdet YOLO size: n, s, m, l
+    conf_threshold: 0.5
+
+    # --- performance / output ---
+    process_every_n: 1         # raise to 2, 3, ... to skip frames on slow hardware
+    log_every_frame: false     # false = only log frames containing a match
