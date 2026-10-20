@@ -3,11 +3,12 @@
 <package format="3">
   <name>banner_detector</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Aerothon 2026 banner detection using EasyOCR + HSV color segmentation</description>
   <maintainer email="skiitm198@gmail.com">satyam</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
   <depend>mission_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>

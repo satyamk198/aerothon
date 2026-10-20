@@ -16,7 +16,7 @@ import py_trees
 import py_trees_ros
 import rclpy
 from px4_msgs.msg import VehicleGlobalPosition, VehicleStatus
-from mission_interfaces.srv import SetPhotoTask, SetZoom
+from mission_interfaces.srv import SetPhotoTask
 from mission_interfaces.action import (
     AlignWithCorridor, CaptureReference, CenterOnTarget, DeliverPayload, GoTo, Land, NavigateCorridor,
     SearchTarget, Takeoff,
@@ -28,15 +28,12 @@ from flight_controller.px4_utils import PX4_QOS, px4_topic
 QR_SCAN_ALTITUDE = 5.0  # m, scan the start QR
 QR_SCAN_ALTITUDE_TOLERANCE = 0.1  # m; takeoff alone only gets within 0.5 m, so climb to it exactly
 QR_CAPTURE_TIMEOUT = 60.0  # s to capture a clear image of the start QR
-QR_CAPTURE_ZOOM = 1.0  # A8 mini zoom for the start-QR capture; 1.0 = off until a value is tested
-ZOOM_SETTLE = 2.0  # s after zooming before capturing; UNTESTED placeholder, measure on the A8 mini
 CORRIDOR_ALTITUDE = 3.0  # m, "descend to 10 feet (approximately 3 meter)"
 SEARCH_ALTITUDE = 10.0  # m, identify the target QR in the delivery zone
 DELIVERY_ALTITUDE = 5.0  # m, payload release
 RETURN_ALTITUDE = 10.0  # m, "after payload delivery, ascend to 10 meter altitude"
 
 PHOTO_TASK_SERVICE = "/siyi_photo/set_task"
-ZOOM_SERVICE = "/siyi_gimbal/set_zoom"
 
 
 class WaitForPx4Ready(py_trees.behaviour.Behaviour):
@@ -104,37 +101,6 @@ class WithPhotos(py_trees.decorators.Decorator):
         self.client.call_async(SetPhotoTask.Request(task=task))
 
 
-class WithZoom(py_trees.decorators.Decorator):
-    """Run the child step with the camera zoomed to `level`; back to 1x when the step ends
-    (success, failure or interruption). Without the zoom service (SITL) the step just runs."""
-
-    def __init__(self, level, child):
-        super().__init__(name=f"Zoom {level:.1f}x: {child.name}", child=child)
-        self.level = level
-        self.node = None
-        self.client = None
-
-    def setup(self, **kwargs):
-        self.node = kwargs["node"]
-        self.client = self.node.create_client(SetZoom, ZOOM_SERVICE)
-
-    def initialise(self):
-        self.set_zoom(self.level)
-
-    def update(self):
-        return self.decorated.status
-
-    def terminate(self, new_status):
-        self.set_zoom(1.0)
-
-    def set_zoom(self, level):
-        if not self.client.service_is_ready():
-            self.node.get_logger().warn(
-                f"{ZOOM_SERVICE} not available; '{self.decorated.name}' runs without zoom.")
-            return
-        self.client.call_async(SetZoom.Request(zoom=float(level)))
-
-
 class Placeholder(py_trees.behaviour.Behaviour):
     """A mission step that has not been written yet: fails so the mission stops visibly here."""
 
@@ -161,7 +127,8 @@ def create_root():
     mission = py_trees.composites.Sequence("AeroTHON mission", memory=True, children=[
         WaitForPx4Ready(),
 
-        # Takeoff + QR code scan: 5 m, center over the start QR, zoom in, store a clear image of it
+        # Takeoff + QR code scan: 5 m, center over the start QR, store a clear image of it
+        # (no zoom: the A8 mini does not zoom in 4K mode, and 4K photos are used throughout)
         action(f"Take off to {QR_SCAN_ALTITUDE:.0f} m", Takeoff, "/flight_controller/takeoff",
                Takeoff.Goal(altitude=QR_SCAN_ALTITUDE)),
         action(f"Climb to exactly {QR_SCAN_ALTITUDE:.0f} m", GoTo, "/flight_controller/goto",
@@ -172,11 +139,8 @@ def create_root():
                 "Carry on if not fully centred",
                 action("Center on start QR", CenterOnTarget, "/center_on_target",
                        CenterOnTarget.Goal(target=CenterOnTarget.Goal.TARGET_SINGLE_QR))),
-            WithZoom(QR_CAPTURE_ZOOM, py_trees.composites.Sequence("Zoomed capture", memory=True, children=[
-                py_trees.timers.Timer("Wait for zoom", duration=ZOOM_SETTLE),
-                action("Capture start QR", CaptureReference, "/qr_detector/capture_reference",
-                       CaptureReference.Goal(timeout=QR_CAPTURE_TIMEOUT)),
-            ])),
+            action("Capture start QR", CaptureReference, "/qr_detector/capture_reference",
+                   CaptureReference.Goal(timeout=QR_CAPTURE_TIMEOUT)),
         ])),
 
         # Corridor navigation: align with the green banner, descend, fly the corridor

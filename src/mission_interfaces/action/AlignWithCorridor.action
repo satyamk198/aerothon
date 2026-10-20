@@ -1,7 +1,10 @@
-# TODO: goal fields
+# Goal (no fields needed; the action aligns using live /perception/banner data)
 ---
+# Result
 bool success
 string message
-# TODO: result fields
 ---
-# TODO: feedback fields
+# Feedback
+float32 error_x              # normalized error [-1, 1], positive = banner right of center
+float32 error_y              # normalized error [-1, 1], positive = banner below center
+bool centered
