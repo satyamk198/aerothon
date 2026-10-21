@@ -1,0 +1,6 @@
+# Delivery-zone corners, one "lat,lon" (decimal degrees) per line, in order around the zone.
+# Replace with the Phase 2 coordinates. Lines starting with # are ignored.
+13.000000, 80.000000
+13.000100, 80.000000
+13.000100, 80.000100
+13.000000, 80.000100

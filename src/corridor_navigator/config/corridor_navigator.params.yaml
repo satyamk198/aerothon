@@ -1,0 +1,21 @@
+# Load on the field, before or between flights:
+#   ros2 param load /corridor_navigator corridor_navigator.params.yaml
+# or one at a time (use 1.0, not 1, for decimal parameters):
+#   ros2 param set /corridor_navigator cruise_speed 0.6
+# Parameters are read at the start of each NavigateCorridor goal.
+/corridor_navigator:
+  ros__parameters:
+    # --- stop rule ---
+    stop_mode: either              # distance | geofence | either (whichever comes first)
+    zone_file: ""                  # e.g. /home/pi/delivery_zone.txt  (empty = distance only)
+    entrance_distance: 2.5         # m, drone to corridor entrance after banner alignment (2-3 m)
+    corridor_length: 10.0          # m
+    zone_margin: 1.0               # m, how far into the zone to stop
+    # --- heading ---
+    heading_source: param          # param | zone | current
+    corridor_heading_deg: 0.0      # PX4 heading along the corridor: 0 = north, clockwise; SET THIS
+    # --- speed ---
+    cruise_speed: 0.8              # m/s
+    max_accel: 0.5                 # m/s^2
+    # --- safety ---
+    max_cross_track: 1.0           # m from the line before aborting
