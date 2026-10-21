@@ -1,6 +1,6 @@
 """Run the mission on the real drone (Raspberry Pi companion computer, no simulator).
 
-    ros2 launch mission_management drone.launch.py camera_hfov:=<A8 mini HFOV, rad> photo_dir:=<folder> \
+    ros2 launch mission_management drone.launch.py photo_dir:=<folder> \
         qr_venv:=$HOME/qr_venv
 
 Starts:
@@ -72,9 +72,9 @@ def generate_launch_description():
         DeclareLaunchArgument("photo_dir",
                               description="Root folder for the 4K photos: <photo_dir>/<run>/<mission step>/ "
                                           "(+ latest link); required"),
-        DeclareLaunchArgument("camera_hfov",
+        DeclareLaunchArgument("camera_hfov", default_value="1.41",
                               description="A8 mini horizontal field of view (rad) for the photos used by "
-                                          "target_centering; required, no default"),
+                                          "target_centering; 81 deg per SIYI's spec"),
         DeclareLaunchArgument("gimbal_pitch_deg", default_value="-90.0",
                               description="Gimbal pitch to hold, -90 = straight down"),
 

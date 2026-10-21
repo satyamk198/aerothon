@@ -15,12 +15,16 @@ import time
 from typing import Dict, List, Optional, Tuple
 
 import cv2
+<<<<<<< HEAD
 try:
     import easyocr
     EASYOCR_AVAILABLE = True
 except ImportError:
     easyocr = None
     EASYOCR_AVAILABLE = False
+=======
+import easyocr
+>>>>>>> dd706fd978ed0dfd01a07240737332a07fc427e0
 import numpy as np
 
 
@@ -48,12 +52,17 @@ class BannerDetector:
     """Detects Aerothon green banner with 'AEROTHON 2026' text."""
 
     def __init__(self, use_gpu: bool = False, min_green_ratio: float = 0.30, max_edit_distance: int = 5):
+<<<<<<< HEAD
         print(f"Initializing BannerDetector (use_gpu={use_gpu}, easyocr_available={EASYOCR_AVAILABLE})...")
         if EASYOCR_AVAILABLE:
             self.reader = easyocr.Reader(["en"], gpu=use_gpu)
         else:
             self.reader = None
             print("Notice: EasyOCR not installed. Falling back to HSV green segmentation & contour aspect filtering.")
+=======
+        print(f"Initializing BannerDetector (use_gpu={use_gpu})...")
+        self.reader = easyocr.Reader(["en"], gpu=use_gpu)
+>>>>>>> dd706fd978ed0dfd01a07240737332a07fc427e0
         self.min_green_ratio = min_green_ratio
         self.max_edit_distance = max_edit_distance
 
@@ -291,10 +300,13 @@ class BannerDetector:
         if roi.size == 0:
             return False, "", 999
 
+<<<<<<< HEAD
         if self.reader is None:
             # EasyOCR is not installed - accept the candidate ROI based on HSV color verification
             return True, "AEROTHON 2026", 0
 
+=======
+>>>>>>> dd706fd978ed0dfd01a07240737332a07fc427e0
         rh, rw = roi.shape[:2]
         # Scale to standard height of 140px (preserves aspect ratio)
         target_h = 140
